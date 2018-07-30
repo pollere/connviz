@@ -7,7 +7,7 @@ const rtdBound = 500;       //milliseconds, discard values above this
 const seqDiffIgnore = 10;   //bytes
 const dupDiffIgnore = .0002; //sec
 const stripTimeWidth = 60.0;   //width of strip chart in seconds
-const cleanUpInterval = 600.;   //ten minutes of data
+const cleanUpInterval = 300.;   //five minutes of data
 const maxIdle = 1200. * 1000;   //twenty minutes (msec)
 
 //data structures
