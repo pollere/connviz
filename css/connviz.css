@@ -1,0 +1,72 @@
+body {
+	font-family: Helvetica Neue, sans-serif;
+}
+info {
+	font-family: sans-serif;
+    	font-size: small;
+    	line-height: 1;
+}
+
+div.inbox {
+  display: flex;
+  flex-flow: row nowrap;
+  justify-content: space-between;
+  align-content: center;
+  align-items: center;
+  padding: 2px 2px
+}
+div.ileft {
+  order: 1;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: space-between;
+  align-content: center;
+  align-items: flex-start;
+}
+div.icenter {
+  order: 2;
+  display: flex;
+  flex-flow: column nowrap;
+  justify-content: space-between;
+  align-content: center;
+  align-items: center;
+  font-size: 12pt;
+}
+div.iright {
+  order: 3;
+  display: flex;
+  margin-right: 2px;
+  flex-flow: column nowrap;
+  justify-content: space-between;
+  align-content: center;
+  align-items: flex-end;
+  font-size: 12pt;
+}
+#stopViz {
+    width: 7em;
+    margin: 1;
+    padding: 0;
+}
+#updateInt {
+  width: 1.5em;
+}
+div#plots {
+    clear: left;
+    background: transparent;
+}
+
+div.pltly {
+    display: inline-block;
+    background-color: #d3d3d3;
+}
+
+label#intSummary {
+	font-family: Helvetica, san-serif;
+	margin-bottom: 10px;
+}
+
+#footer{
+    margin-left: 200px;
+	font-family: Helvetica, san-serif;
+    font-size: 14px;
+}

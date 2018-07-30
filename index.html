@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head lang='en'>
+    <meta charset='utf-8'>
+    <title>ConnMon Viz</title>
+    <link rel = "stylesheet" href = "connviz.css">
+   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+
+<body>
+
+    <div id="info" style="background:#3cb371; margin: 5 5 5 5">
+    <div class="inbox">
+        <div class="ileft">
+            <label id="dateTime" style="margin: 10px 0 5px 2px">-</label>
+            <label id="runStatus" style="margin: 10px 0 5px 2px">Waiting to connect</label>
+            <button id="stopViz" onclick="toggleVu();">stop processing updates</button>
+        </div>
+        <div class="iright">
+            <label id="intSummary">Collecting connMon output over the update interval</label>
+            <div>data update interval (sec): <input type="text" id="updateInt" value="0.5">
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div id="plots" style="background:#d3d3d3"; "margin: 5 5 5 5">
+    </div>
+    <footer style="clear: left; background:#3cb371; text-align: center">
+        <small>Copyright &copy 2018 Pollere, Inc. All Rights Reserved.</small>
+    </footer>
+
+<!-- the d3.js library -->
+<script src="http://d3js.org/d3.v4.min.js"></script>
+
+<!-- connviz javascript -->
+<script type="module" src="./connviz.js"></script>
+
+<!-- manage websocket and information div -->
+<script type="module">
+    import {initVisualization, processInterval} from "./connviz.js";
+
+    let chunkInterval = +d3.select("#updateInt").property("value");
+    d3.select("updateInt").on("input", function ()  {
+                        chunkInterval = +this.value;
+                        d3.select("#updateInt").text(chunkInterval);
+                    });
+
+    const conn = new WebSocket('ws://127.0.0.1:8080');
+    let dateLabel = d3.select("#dateTime");
+    let stopVu = false;
+    function toggleVu() {
+        if(stopVu) {
+            stopVu = false;
+            d3.select("#stopViz").text("stop processing updates");
+        } else {
+            stopVu = true;
+            d3.select("#stopViz").text("start processing updates");
+        }
+    }
+    initVisualization("plots");
+
+    let tmsg = "timespan " + (chunkInterval * 1000).toString();
+
+    const tserr = (e) => console.log('Error sending ' + tmsg, e);
+    conn.onopen = () => {
+        console.log('opened connection');
+        conn.send(tmsg, tserr);
+    };
+    conn.onerror = (e) => {
+        const s = `Error opening websocket ${e.target.url}`;
+        d3.select("#runStatus").text(s);
+        console.log(s);
+    }
+    conn.onmessage = (msg) => {
+        d3.select("#runStatus").text("Processing current message");
+        //if not in stopped mode
+        if(!stopVu) {
+            let displayTm = processInterval(msg.data, chunkInterval);
+            dateLabel.text(() => { return new Date(displayTm*1000); });
+        }
+
+        //check if interval timing has changed
+        if( +(d3.select("#updateInt").property("value")) != chunkInterval) {
+            chunkInterval = +d3.select("#updateInt").property("value");
+            let msg = "timespan " + (chunkInterval * 1000).toString();
+            conn.send(msg, (err) => {
+                d3.select("#runStatus").text("Error on sending updated display interval");
+            });
+            console.log('changed to ' + msg);
+        }
+        d3.select("#runStatus").text("Waiting for next message");
+    };
+</script>
+</body>
+</html>
