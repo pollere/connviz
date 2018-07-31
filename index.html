@@ -3,7 +3,7 @@
 <head lang='en'>
     <meta charset='utf-8'>
     <title>ConnMon Viz</title>
-    <link rel = "stylesheet" href = "connviz.css">
+    <link rel = "stylesheet" href = "./css/connviz.css">
    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 
@@ -34,11 +34,11 @@
 <script src="http://d3js.org/d3.v4.min.js"></script>
 
 <!-- connviz javascript -->
-<script type="module" src="./connviz.js"></script>
+<script type="module" src="./js/connviz.js"></script>
 
 <!-- manage websocket and information div -->
 <script type="module">
-    import {initVisualization, processInterval} from "./connviz.js";
+    import {initVisualization, processInterval} from "./js/connviz.js";
 
     let chunkInterval = +d3.select("#updateInt").property("value");
     d3.select("updateInt").on("input", function ()  {

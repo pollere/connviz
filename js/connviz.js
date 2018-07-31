@@ -107,7 +107,6 @@ let ooda = {
 };
 let oohl = Object.assign({}, ooda, {y: 0.75*(r3[1]-r3[0])}, {text: "holes in sequence"});
 let oola = Object.assign({}, ooda, {y: 0.25*(r3[1]-r3[0])}, {text: "late arrivals"});
-let oosd = Object.assign({}, ooda, {y: +0}, {xanchor: "left"}, {yanchor: "top"});
 
 let trNum = new Array(2);
 for (var i = 0; i < 2; i++) {
@@ -157,24 +156,28 @@ function initStripCharts(pdiv) {
             type: "date",
             anchor: "y5",
             domain: col[1],
-            tickfont: {size: 10}
+            tickfont: {size: 10},
+            showticklabels: true
         },
         xaxis2: {
             type: "date",
             anchor: "y2",
             domain: col[0],
-            tickfont: {size: 10}
+            tickfont: {size: 10},
+            showticklabels: true
         },
         xaxis3: {
             type: "date",
             anchor: "y3",
             domain: col[0],
+            tickfont: {size: 10},
             showticklabels: false
         },
         xaxis6: {
             type: "date",
             anchor: "y6",
             domain: col[1],
+            tickfont: {size: 10},
             showticklabels: false
         },
         yaxis2: {
@@ -190,13 +193,18 @@ function initStripCharts(pdiv) {
             autorange: true,
             anchor: "x3",
             range: [-1.5,1.5],
-            showticklabels: false
+            showticklabels: false,
+            title: "out-of-order [side0]",
+            titlefont: {family: "Helvetica", size: 10}
         },
         yaxis6: {
             domain: r3,
             anchor: "x6",
             range: [-1.5,1.5],
-            showticklabels: false
+            showticklabels: false,
+            title: "out-of-order [side1]",
+            side: 'right',
+            titlefont: {family: "Helvetica", size: 10}
         },
         yaxis4: {
             domain: r1,
@@ -334,17 +342,8 @@ function updateTraces(pdiv, lt) {
                     layout["annotations"] = [
                         ooda,
                         oohl,
-                        oola,
-                        Object.assign ({}, oosd, { x: col[s][0] }, {text: "out-of-order [side " + s + "]"})
+                        oola
                     ];
-            } else if(trNum[s]["oo"] === undefined && trNum[s]["dp"] === undefined) {
-                    if(layout["annotations"]) {
-                        layout.annotations[layout.annotations.length] = Object.assign({},
-                            oosd, {x: col[s][0] }, {text: "out-of-order [side " + s + "]"});
-                    } else {
-                        pdiv.layout.annotations[pdiv.layout.annotations.length] = Object.assign({},
-                            oosd, {x: col[s][0] }, {text: "out-of-order [side " + s + "]"});
-                    }
             }
             if(d.too.length) {  //out-of-order seq nos
                 if(trNum[s]["oo"] !== undefined) {
@@ -399,8 +398,10 @@ function updateTraces(pdiv, lt) {
     if(newTr.length)    //any new traces?
         Plotly.addTraces(pdiv, newTr);
     //make sure the time scale is always visible somwhere
-    layout["xaxis.showticklabels"] = (trNum[0]["sd"] === undefined)? true : false;
-    layout["xaxis4.showticklabels"] = (trNum[1]["sd"] === undefined)? true : false;
+    layout["xaxis.showticklabels"] =
+        (trNum[0]["sd"] === undefined)? true : false;
+    layout["xaxis4.showticklabels"] =
+        (trNum[1]["sd"] === undefined)? true : false;
     Plotly.relayout(pdiv, layout);  //adjust ranges 
     if(indices.length)  //updates to existing traces?
         Plotly.extendTraces (pdiv, update, indices, 10000);
@@ -487,24 +488,32 @@ function plotInterval(pdiv, lstTm) {
     //check if single sided or not
     let idleSide = [];
     for(let i=0; i<2;i++) { //check for an idle side
-        if(cpSide[i].rpdMax === undefined && cpSide[i].rsdMax === undefined)
+        if(cpSide[i].rpdCnt === undefined && cpSide[i].rsdCnt === undefined)
             idleSide.push(i);
     }
     if(singleSide === false && idleSide.length === 1) {
         //give the active side the entire width
         let layout = {};
-        let p = 2*idleSide[0] + 1;
-        let nm = p > 1 ?  "xaxis" + p + ".domain": "xaxis.domain";
-        layout[nm] = [0, 0];
-        p++;
-        nm = "xaxis" + p + ".domain";
-        layout[nm] = [0, 0];
-        p = 2 * ((idleSide[0] + 1) % 2) +1;
-        nm = p > 1 ?  "xaxis" + p + ".domain": "xaxis.domain";
-        layout[nm] = [0, 1];
-        p++;
-        nm = "xaxis" + p + ".domain";
-        layout[nm] = [0, 1];
+        let p = 3*idleSide[0] + 1;  
+        for(let i=0; i< 3; i++) {
+            let k = p+i;
+            let nm = k > 1 ?  "xaxis" + k + ".domain": "xaxis.domain";
+            layout[nm] = [0, 0];
+            if(i===2) {
+                layout["yaxis" + k + ".title"] = "";
+            }
+        }
+        //the non idle side
+        p = 3*((idleSide[0] + 1)%2) + 1;
+        for(let i=0; i< 3; i++) {
+            let k = p+i;
+            let nm = k > 1 ?  "xaxis" + k + ".domain": "xaxis.domain";
+            layout[nm] = [0, 1];
+            if(i===2) {
+                layout["yaxis" + k + ".title"] = "out-of-orders";
+                layout["yaxis" + k + ".side"] = "left";
+            }
+        }
         Plotly.relayout(pdiv, layout);
         singleSide = true;
     } else if(singleSide === true && idleSide.length === 0) {
@@ -512,9 +521,12 @@ function plotInterval(pdiv, lstTm) {
         layout["xaxis.domain"] = col[0];
         layout["xaxis2.domain"] = col[0];
         layout["xaxis3.domain"] = col[0];
+        layout["yaxis3.title"] = "out-of-order [side 0]";
         layout["xaxis4.domain"] = col[1];
         layout["xaxis5.domain"] = col[1];
         layout["xaxis6.domain"] = col[1];
+        layout["yaxis6.title"] = "out-of-order [side 1]";
+        layout["yaxis6.side"] = "right";
         Plotly.relayout(pdiv, layout);
         singleSide = false;
     }
@@ -652,17 +664,7 @@ function processLine(line) {
         if(c.rsdCnt === undefined)
             c.rsdCnt = +0;
         c.rsdCnt++;
-/*
-        if(c.rsdMin === undefined)
-            c.rsdMin = new WinMin(2*stripTimeWidth, tm, sd);
-        else
-            c.rsdMin.update(tm, sd);
-*/
         //ignore values that exceed 500 ms
-        if(+sd < 500 && c.rsdMax === undefined)
-            c.rsdMax = new WinMax(2*stripTimeWidth, tm, sd);
-        else if(+sd < 500) 
-            c.rsdMax.update(tm, sd);
         d.tsd.push(+tm);
         d.rsd.push(+sd);
         d.csd.push(color);
@@ -730,7 +732,6 @@ export function initVisualization(dname) {
     //persistent info about each side, max object defined later
     for(let i=0; i<2; i++)
         cpSide[i] = {
-            srcCnt: +0,
             oo: false,
             da: false
         };
